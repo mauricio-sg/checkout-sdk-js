@@ -33,10 +33,8 @@ export default class AmazonPayV2PaymentProcessor {
         return this._getAmazonPayV2SDK().Pay.renderButton(containerId, options);
     }
 
-    async signout(): Promise<void> {
-        if (this._amazonPayV2SDK) {
-            this._amazonPayV2SDK.Pay.signout();
-        }
+    signout(): Promise<void> {
+        this._getAmazonPayV2SDK().Pay.signout();
 
         return Promise.resolve();
     }

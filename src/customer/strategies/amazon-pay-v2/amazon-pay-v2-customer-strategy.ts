@@ -33,11 +33,13 @@ export default class AmazonPayV2CustomerStrategy implements CustomerStrategy {
         return this._store.getState();
     }
 
-    deinitialize(): Promise<InternalCheckoutSelectors> {
+    async deinitialize(): Promise<InternalCheckoutSelectors> {
         if (this._walletButton && this._walletButton.parentNode) {
             this._walletButton.parentNode.removeChild(this._walletButton);
             this._walletButton = undefined;
         }
+
+        await this._amazonPayV2PaymentProcessor.deinitialize();
 
         return Promise.resolve(this._store.getState());
     }
@@ -56,10 +58,17 @@ export default class AmazonPayV2CustomerStrategy implements CustomerStrategy {
             return Promise.resolve(this._store.getState());
         }
 
-        await this._amazonPayV2PaymentProcessor.signout();
+        const { providerId: methodId } = payment;
+
+        const paymentMethod = state.paymentMethods.getPaymentMethod(methodId);
+
+        if (paymentMethod) {
+            await this._amazonPayV2PaymentProcessor.initialize(paymentMethod);
+            await this._amazonPayV2PaymentProcessor.signout();
+        }
 
         return this._store.dispatch(
-            this._remoteCheckoutActionCreator.signOut(payment.providerId, options)
+            this._remoteCheckoutActionCreator.signOut(methodId, options)
         );
     }
 
